@@ -1,44 +1,48 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inventario</title>
-        <!-- Iconos de Font Awesome -->
+    <title>Finanzas Personales</title>
+    <!-- Iconos de Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <!-- Librería de Gráficos (Chart.js) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="estilo.css">
 </head>
+
 <body>
 
     <div class="dashboard-container">
         <!-- Barra Lateral -->
         <aside class="sidebar">
-            <div class="logo">
-                <i class="fas fa-warehouse"></i> Inventario
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-wallet"></i> Finanzas Personales
+                </div>
+                <button class="hamburger-btn" id="hamburgerBtn" aria-label="Toggle menu">
+                    <i class="fas fa-bars"></i>
+                </button>
             </div>
-            <nav class="sidebar-nav">
+            <nav class="sidebar-nav" id="sidebarNav">
                 <a href="#dashboard" class="active" data-section="dashboard">
                     <i class="fas fa-chart-line"></i> Dashboard
                 </a>
-                <a href="#inventario" data-section="inventario">
-                    <i class="fas fa-cubes"></i> Inventario Actual
+                <a href="#gastos" data-section="gastos">
+                    <i class="fas fa-money-bill-wave"></i> Registrar Gastos
                 </a>
-                <a href="#productos" data-section="productos">
-                    <i class="fas fa-box-open"></i> Registrar Producto
+                <a href="#ingresos" data-section="ingresos">
+                    <i class="fas fa-hand-holding-usd"></i> Registrar Ingresos
+                </a>
+                <a href="#objetivos" data-section="objetivos">
+                    <i class="fas fa-bullseye"></i> Objetivos Financieros
                 </a>
                 <a href="#categorias" data-section="categorias">
-                    <i class="fas fa-tags"></i> Categorías
+                    <i class="fas fa-tags"></i> Categorías de Gastos
                 </a>
-                <a href="#compras" data-section="compras">
-                    <i class="fas fa-truck-loading"></i> Compras
-                </a>
-                <a href="#ventas" data-section="ventas">
-                    <i class="fas fa-cash-register"></i> Ventas
-                </a>
-                <a href="#resumenes" data-section="resumenes">
-                    <i class="fas fa-list-alt"></i> Resúmenes
+                <a href="#fuentes" data-section="fuentes">
+                    <i class="fas fa-stream"></i> Fuentes de Ingreso
                 </a>
                 <a href="#configuracion" data-section="configuracion">
                     <i class="fas fa-cog"></i> Configuración
@@ -48,225 +52,252 @@
 
         <!-- Contenido Principal -->
         <main class="main-content">
-            
+
             <!-- Sección 0: Dashboard (Gráficos) -->
             <section id="dashboard" class="content-section active">
                 <h2><i class="fas fa-chart-line"></i> Dashboard - Resumen Financiero</h2>
-                
-                <!-- Botones de control -->
-                <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-                    <button id="cargarDatosGraficosBtn" class="btn primary-btn">
-                        <i class="fas fa-sync"></i> Actualizar Dashboard
+
+                <!-- Filtros Temporales -->
+                <div style="display: flex; gap: 10px; margin-bottom: 20px; align-items: center;">
+                    <span style="font-weight: bold;">Ver:</span>
+                    <button id="filtroDiario" class="btn secondary-btn filtro-activo">
+                        <i class="fas fa-calendar-day"></i> Diario
                     </button>
-                    <button id="calcularResumenBtn" class="btn secondary-btn">
-                        <i class="fas fa-calculator"></i> Calcular Resumen
+                    <button id="filtroSemanal" class="btn secondary-btn">
+                        <i class="fas fa-calendar-week"></i> Semanal
+                    </button>
+                    <button id="filtroMensual" class="btn secondary-btn">
+                        <i class="fas fa-calendar-alt"></i> Mensual
+                    </button>
+                    <button id="actualizarDashboardBtn" class="btn primary-btn" style="margin-left: auto;">
+                        <i class="fas fa-sync"></i> Actualizar
                     </button>
                 </div>
-                
+
                 <div id="statusDashboard" class="status-message"></div>
 
                 <!-- Estadísticas Resumen -->
                 <div class="stats-grid">
-                    <div class="stat-card ventas">
-                        <i class="fas fa-shopping-cart fa-2x" style="color: var(--primary-color);"></i>
-                        <div class="stat-value" id="totalVentas">$0.00</div>
-                        <div class="stat-label">Total Ventas</div>
-                    </div>
-                    <div class="stat-card compras">
-                        <i class="fas fa-truck-loading fa-2x" style="color: var(--info-color);"></i>
-                        <div class="stat-value" id="totalCompras">$0.00</div>
-                        <div class="stat-label">Total Compras</div>
-                    </div>
-                    <div class="stat-card ganancias">
-                        <i class="fas fa-chart-line fa-2x" style="color: var(--secondary-color);"></i>
-                        <div class="stat-value" id="totalGanancias">$0.00</div>
-                        <div class="stat-label">Ganancias Netas</div>
+                    <div class="stat-card ingresos">
+                        <i class="fas fa-hand-holding-usd fa-2x" style="color: var(--secondary-color);"></i>
+                        <div class="stat-value" id="totalIngresos">$0.00</div>
+                        <div class="stat-label">Total Ingresos</div>
                     </div>
                     <div class="stat-card gastos">
                         <i class="fas fa-money-bill-wave fa-2x" style="color: var(--danger-color);"></i>
                         <div class="stat-value" id="totalGastos">$0.00</div>
                         <div class="stat-label">Total Gastos</div>
                     </div>
+                    <div class="stat-card balance">
+                        <i class="fas fa-balance-scale fa-2x" style="color: var(--primary-color);"></i>
+                        <div class="stat-value" id="balance">$0.00</div>
+                        <div class="stat-label">Balance</div>
+                    </div>
+                    <div class="stat-card objetivo">
+                        <i class="fas fa-bullseye fa-2x" style="color: var(--info-color);"></i>
+                        <div class="stat-value" id="progresoObjetivo">0%</div>
+                        <div class="stat-label">Progreso Objetivo</div>
+                    </div>
                 </div>
 
                 <!-- Gráficas -->
                 <div class="chart-container">
-                    <canvas id="resumenFinancieroChart"></canvas>
+                    <canvas id="ingresoVsGastoChart"></canvas>
                 </div>
                 <div class="chart-container">
-                    <canvas id="tendenciasChart"></canvas>
+                    <canvas id="gastosPorCategoriaChart"></canvas>
                 </div>
             </section>
-            
-            <!-- Las demás secciones se mantienen igual -->
-            <!-- Sección 1: Inventario Actual -->
-            <section id="inventario" class="content-section">
-                <h2><i class="fas fa-cubes"></i> Inventario Actual</h2>
-                <p>Lista de todos los productos y su stock disponible.</p>
-                <button id="cargarInventarioBtn" class="btn secondary-btn">
-                    <i class="fas fa-boxes"></i> Refrescar Inventario
+
+            <!-- Sección 1: Registrar Gastos -->
+            <section id="gastos" class="content-section">
+                <h2><i class="fas fa-money-bill-wave"></i> Registrar Gastos</h2>
+                <form id="gastoForm" class="form-grid">
+                    <div class="form-group">
+                        <label for="gasto_categoria">Categoría:</label>
+                        <select id="gasto_categoria" required>
+                            <option value="" disabled selected>Cargando categorías...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="gasto_monto">Monto:</label>
+                        <input type="number" id="gasto_monto" required min="0.01" step="0.01" placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label for="gasto_descripcion">Descripción:</label>
+                        <input type="text" id="gasto_descripcion" required placeholder="Ej: Pago de luz">
+                    </div>
+                    <div class="form-group">
+                        <label for="gasto_fecha">Fecha:</label>
+                        <input type="date" id="gasto_fecha" required>
+                    </div>
+
+                    <button type="submit" class="btn primary-btn full-width">
+                        <i class="fas fa-save"></i> Registrar Gasto
+                    </button>
+                </form>
+                <div id="statusGasto" class="status-message"></div>
+
+                <h3 style="margin-top: 30px;">Historial de Gastos</h3>
+                <button id="cargarGastosBtn" class="btn secondary-btn">
+                    <i class="fas fa-list"></i> Cargar Gastos
                 </button>
-                <div id="statusInventario" class="status-message"></div>
-                <div style="max-height: 600px; overflow-y: auto;">
+                <div style="max-height: 400px; overflow-y: auto; margin-top: 15px;">
                     <table class="data-table">
                         <thead>
                             <tr>
-                                <th>ID</th>
-                                <th>Nombre</th>
-                                <th>Código</th>
+                                <th>Fecha</th>
                                 <th>Categoría</th>
-                                <th>Stock</th>
-                                <th>P. Venta</th>
+                                <th>Descripción</th>
+                                <th>Monto</th>
+                                <th>Acciones</th>
                             </tr>
                         </thead>
-                        <tbody id="inventarioTableBody">
-                            <tr><td colspan="6">Presiona "Refrescar Inventario" para cargar los datos.</td></tr>
+                        <tbody id="gastosTableBody">
+                            <tr>
+                                <td colspan="5">Presiona "Cargar Gastos" para ver el historial.</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
             </section>
 
-            <!-- Sección 2: Registrar Producto -->
-            <section id="productos" class="content-section">
-                <h2><i class="fas fa-box-open"></i> Registrar Nuevo Producto</h2>
-                <p class="status-message info" style="display:block;">El ID del producto se generará automáticamente.</p>
-                <form id="productoForm" class="form-grid">
+            <!-- Sección 2: Registrar Ingresos -->
+            <section id="ingresos" class="content-section">
+                <h2><i class="fas fa-hand-holding-usd"></i> Registrar Ingresos</h2>
+                <form id="ingresoForm" class="form-grid">
                     <div class="form-group">
-                        <label for="p_codigo">Código Único:</label>
-                        <input type="text" id="p_codigo" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="p_nombre">Nombre:</label>
-                        <input type="text" id="p_nombre" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="p_categoria">Categoría:</label>
-                        <select id="p_categoria" required>
-                            <option value="" disabled selected>Cargando categorías...</option>
+                        <label for="ingreso_fuente">Fuente:</label>
+                        <select id="ingreso_fuente" required>
+                            <option value="" disabled selected>Cargando fuentes...</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="p_precio_compra">Precio Compra:</label>
-                        <input type="number" id="p_precio_compra" required min="0.01" step="0.01">
+                        <label for="ingreso_monto">Monto:</label>
+                        <input type="number" id="ingreso_monto" required min="0.01" step="0.01" placeholder="0.00">
                     </div>
                     <div class="form-group">
-                        <label for="p_precio_venta">Precio Venta:</label>
-                        <input type="number" id="p_precio_venta" required min="0.01" step="0.01">
+                        <label for="ingreso_descripcion">Descripción:</label>
+                        <input type="text" id="ingreso_descripcion" required placeholder="Ej: Pago quincenal">
                     </div>
                     <div class="form-group">
-                        <label for="p_stock">Stock Inicial:</label>
-                        <input type="number" id="p_stock" required min="0">
+                        <label for="ingreso_fecha">Fecha:</label>
+                        <input type="date" id="ingreso_fecha" required>
                     </div>
 
                     <button type="submit" class="btn primary-btn full-width">
-                        <i class="fas fa-save"></i> Registrar Nuevo Producto
+                        <i class="fas fa-save"></i> Registrar Ingreso
                     </button>
                 </form>
-                <div id="statusProducto" class="status-message"></div>
-            </section>
-            
-            <!-- Las demás secciones permanecen igual... -->
-            <!-- Sección 3: Categorías -->
-            <section id="categorias" class="content-section">
-                <h2><i class="fas fa-tags"></i> Gestión de Categorías</h2>
-                <form id="categoriaForm" class="form-grid single-col">
-                    <div class="form-group">
-                        <label for="c_nombre">Nombre de la Categoría:</label>
-                        <input type="text" id="c_nombre" required placeholder="Ej: Electrónica, Ropa, etc.">
-                    </div>
-                    <button type="submit" class="btn secondary-btn">
-                        <i class="fas fa-plus"></i> Agregar Categoría
-                    </button>
-                </form>
-                <div id="statusCategoria" class="status-message"></div>
-                
-                <h3>Categorías Existentes:</h3>
-                <ul id="listaCategorias">
-                    <li>Cargando...</li>
-                </ul>
-            </section>
+                <div id="statusIngreso" class="status-message"></div>
 
-            <!-- Sección 4: Compras -->
-            <section id="compras" class="content-section">
-                <h2><i class="fas fa-truck-loading"></i> Registro de Compras (Añade Stock)</h2>
-                <form id="compraForm" class="form-grid">
-                    <div class="form-group">
-                        <label for="co_query">Buscar Producto (ID, Código o Nombre):</label>
-                        <input type="text" id="co_query" placeholder="Escriba para buscar y cargar datos" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="co_cantidad">Cantidad Comprada:</label>
-                        <input type="number" id="co_cantidad" required min="1">
-                    </div>
-                    <div class="form-group">
-                        <label for="co_precio_compra">Precio Unitario de Compra:</label>
-                        <input type="number" id="co_precio_compra" required min="0.01" step="0.01">
-                    </div>
-                    <div class="form-group">
-                        <label for="co_proveedor">Proveedor (Opcional):</label>
-                        <input type="text" id="co_proveedor">
-                    </div>
-
-                    <div class="product-details hidden full-width" id="co_product_details"></div>
-                    <input type="hidden" id="co_producto_id">
-
-                    <button type="submit" class="btn primary-btn full-width" id="co_submit_btn" disabled>
-                        <i class="fas fa-cart-plus"></i> Registrar Compra
-                    </button>
-                </form>
-                <div id="statusCompra" class="status-message"></div>
-            </section>
-            
-            <!-- Sección 5: Ventas -->
-            <section id="ventas" class="content-section">
-                <h2><i class="fas fa-cash-register"></i> Registro de Ventas (Resta Stock)</h2>
-                <form id="ventaForm" class="form-grid">
-                    <div class="form-group">
-                        <label for="v_query">Buscar Producto (ID, Código o Nombre):</label>
-                        <input type="text" id="v_query" required placeholder="Escriba para buscar y cargar datos">
-                    </div>
-                    <div class="form-group">
-                        <label for="v_cantidad">Cantidad Vendida:</label>
-                        <input type="number" id="v_cantidad" required min="1">
-                    </div>
-                    <div class="form-group">
-                        <label for="v_precio_venta">Precio Unitario de Venta:</label>
-                        <input type="number" id="v_precio_venta" required min="0.01" step="0.01">
-                    </div>
-                    <div class="form-group">
-                        <label for="v_cliente">Cliente (Opcional):</label>
-                        <input type="text" id="v_cliente">
-                    </div>
-
-                    <div class="product-details hidden full-width" id="v_product_details"></div>
-                    <input type="hidden" id="v_producto_id">
-
-                    <button type="submit" class="btn primary-btn full-width" id="v_submit_btn" disabled>
-                        <i class="fas fa-hand-holding-usd"></i> Registrar Venta
-                    </button>
-                </form>
-                <div id="statusVenta" class="status-message"></div>
-            </section>
-
-            <!-- Sección 6: Resúmenes -->
-            <section id="resumenes" class="content-section">
-                <h2><i class="fas fa-list-alt"></i> Resúmenes y Reportes</h2>
-                <div class="form-grid">
-                    <button id="resumenVentasBtn" class="btn secondary-btn"><i class="fas fa-chart-bar"></i> Ver Resumen de Ventas (Histórico)</button>
-                    <button id="resumenComprasBtn" class="btn secondary-btn"><i class="fas fa-chart-bar"></i> Ver Resumen de Compras (Histórico)</button>
-                </div>
-                
-                <div id="statusResumen" class="status-message"></div>
-                
-                <div style="max-height: 600px; overflow-y: auto; margin-top: 20px;">
-                    <table class="data-table hidden" id="resumenTable">
-                        <thead></thead>
-                        <tbody id="resumenTableBody"></tbody>
+                <h3 style="margin-top: 30px;">Historial de Ingresos</h3>
+                <button id="cargarIngresosBtn" class="btn secondary-btn">
+                    <i class="fas fa-list"></i> Cargar Ingresos
+                </button>
+                <div style="max-height: 400px; overflow-y: auto; margin-top: 15px;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Fuente</th>
+                                <th>Descripción</th>
+                                <th>Monto</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ingresosTableBody">
+                            <tr>
+                                <td colspan="5">Presiona "Cargar Ingresos" para ver el historial.</td>
+                            </tr>
+                        </tbody>
                     </table>
                 </div>
             </section>
 
-            <!-- Sección 7: Configuración -->
+            <!-- Sección 3: Objetivos Financieros -->
+            <section id="objetivos" class="content-section">
+                <h2><i class="fas fa-bullseye"></i> Objetivos Financieros</h2>
+                <p class="status-message info" style="display:block;">Define tu meta de ahorro y monitorea tu progreso.
+                </p>
+
+                <form id="objetivoForm" class="form-grid">
+                    <div class="form-group">
+                        <label for="objetivo_nombre">Nombre del Objetivo:</label>
+                        <input type="text" id="objetivo_nombre" required placeholder="Ej: Ahorrar para vacaciones">
+                    </div>
+                    <div class="form-group">
+                        <label for="objetivo_monto">Monto Meta:</label>
+                        <input type="number" id="objetivo_monto" required min="1" step="0.01" placeholder="2000000">
+                    </div>
+                    <div class="form-group">
+                        <label for="objetivo_plazo">Plazo (meses):</label>
+                        <input type="number" id="objetivo_plazo" required min="1" placeholder="7">
+                    </div>
+                    <div class="form-group">
+                        <label for="objetivo_fecha_inicio">Fecha de Inicio:</label>
+                        <input type="date" id="objetivo_fecha_inicio" required>
+                    </div>
+
+                    <button type="submit" class="btn primary-btn full-width">
+                        <i class="fas fa-flag-checkered"></i> Crear Objetivo
+                    </button>
+                </form>
+                <div id="statusObjetivo" class="status-message"></div>
+
+                <h3 style="margin-top: 30px;">Objetivo Actual</h3>
+                <div id="objetivoActualContainer"
+                    style="padding: 20px; background: #f8f9fa; border-radius: 8px; margin-top: 15px;">
+                    <p style="text-align: center; color: #666;">No hay objetivo activo. Crea uno arriba.</p>
+                </div>
+            </section>
+
+            <!-- Sección 4: Categorías de Gastos -->
+            <section id="categorias" class="content-section">
+                <h2><i class="fas fa-tags"></i> Gestión de Categorías de Gastos</h2>
+                <form id="categoriaForm" class="form-grid">
+                    <div class="form-group">
+                        <label for="cat_nombre">Nombre de la Categoría:</label>
+                        <input type="text" id="cat_nombre" required placeholder="Ej: Vivienda, Personal, Deuda">
+                    </div>
+                    <div class="form-group">
+                        <label for="cat_color">Color (para gráficos):</label>
+                        <input type="color" id="cat_color" value="#007bff">
+                    </div>
+                    <button type="submit" class="btn secondary-btn full-width">
+                        <i class="fas fa-plus"></i> Agregar Categoría
+                    </button>
+                </form>
+                <div id="statusCategoria" class="status-message"></div>
+
+                <h3>Categorías Existentes:</h3>
+                <ul id="listaCategorias" style="list-style: none; padding: 0;">
+                    <li>Cargando...</li>
+                </ul>
+            </section>
+
+            <!-- Sección 5: Fuentes de Ingreso -->
+            <section id="fuentes" class="content-section">
+                <h2><i class="fas fa-stream"></i> Gestión de Fuentes de Ingreso</h2>
+                <form id="fuenteForm" class="form-grid single-col">
+                    <div class="form-group">
+                        <label for="fuente_nombre">Nombre de la Fuente:</label>
+                        <input type="text" id="fuente_nombre" required
+                            placeholder="Ej: Sueldo, Emprendimiento, Regalías">
+                    </div>
+                    <button type="submit" class="btn secondary-btn">
+                        <i class="fas fa-plus"></i> Agregar Fuente
+                    </button>
+                </form>
+                <div id="statusFuente" class="status-message"></div>
+
+                <h3>Fuentes Existentes:</h3>
+                <ul id="listaFuentes" style="list-style: none; padding: 0;">
+                    <li>Cargando...</li>
+                </ul>
+            </section>
+
+            <!-- Sección 6: Configuración -->
             <section id="configuracion" class="content-section">
                 <h2><i class="fas fa-cog"></i> Configuración de Base de Datos</h2>
                 <div class="config-actions">
@@ -274,7 +305,7 @@
                     <button id="iniciarDBBtn" class="btn primary-btn">
                         <i class="fas fa-play-circle"></i> Iniciar Base de Datos
                     </button>
-                    
+
                     <p class="warning-text" style="color: var(--danger-color); font-weight: bold; margin-top: 20px;">
                         ¡ADVERTENCIA! Esta acción eliminará **TODOS** los datos.
                     </p>
@@ -289,6 +320,7 @@
 
     <script src="script.js"></script>
 
-    
+
 </body>
+
 </html>
