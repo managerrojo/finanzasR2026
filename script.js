@@ -513,26 +513,40 @@ async function eliminarGasto(id) {
         return;
     }
 
+    console.log('=== ELIMINAR GASTO ===');
+    console.log('ID a eliminar:', id);
+
     displayStatus('statusGasto', 'info', 'Eliminando gasto...');
+
+    const requestData = {
+        action: 'eliminarGasto',
+        id: id
+    };
+
+    console.log('Datos a enviar:', requestData);
 
     try {
         const response = await fetch(SCRIPT_URL, {
             method: 'POST',
-            body: JSON.stringify({
-                action: 'eliminarGasto',
-                id: id
-            }),
+            body: JSON.stringify(requestData),
             headers: { 'Content-Type': 'text/plain;charset=utf-8' }
         });
+
+        console.log('Response status:', response.status);
+        console.log('Response OK:', response.ok);
+
         const data = await response.json();
+        console.log('Respuesta del servidor:', data);
 
         if (data.status === 'success') {
             displayStatus('statusGasto', 'success', data.message);
             loadGastos();
         } else {
             displayStatus('statusGasto', 'error', data.message);
+            console.error('Error del servidor:', data.message);
         }
     } catch (error) {
+        console.error('Error en la petición:', error);
         displayStatus('statusGasto', 'error', `Error al eliminar: ${error.message}`);
     }
 }
@@ -686,26 +700,40 @@ async function eliminarIngreso(id) {
         return;
     }
 
+    console.log('=== ELIMINAR INGRESO ===');
+    console.log('ID a eliminar:', id);
+
     displayStatus('statusIngreso', 'info', 'Eliminando ingreso...');
+
+    const requestData = {
+        action: 'eliminarIngreso',
+        id: id
+    };
+
+    console.log('Datos a enviar:', requestData);
 
     try {
         const response = await fetch(SCRIPT_URL, {
             method: 'POST',
-            body: JSON.stringify({
-                action: 'eliminarIngreso',
-                id: id
-            }),
+            body: JSON.stringify(requestData),
             headers: { 'Content-Type': 'text/plain;charset=utf-8' }
         });
+
+        console.log('Response status:', response.status);
+        console.log('Response OK:', response.ok);
+
         const data = await response.json();
+        console.log('Respuesta del servidor:', data);
 
         if (data.status === 'success') {
             displayStatus('statusIngreso', 'success', data.message);
             loadIngresos();
         } else {
             displayStatus('statusIngreso', 'error', data.message);
+            console.error('Error del servidor:', data.message);
         }
     } catch (error) {
+        console.error('Error en la petición:', error);
         displayStatus('statusIngreso', 'error', `Error al eliminar: ${error.message}`);
     }
 }
