@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Finanzas Personales</title>
+    <title>Finanzas Ray</title>
     <!-- Iconos de Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <!-- Librería de Gráficos (Chart.js) -->
@@ -14,12 +14,39 @@
 
 <body>
 
+    <!-- Overlay de Inicio de Sesión -->
+    <div id="loginOverlay" class="login-overlay">
+        <div class="login-box">
+            <div class="login-header">
+                <i class="fas fa-wallet fa-3x"></i>
+                <h2>Finanzas Ray</h2>
+                <p>Ingresa tus credenciales para continuar</p>
+            </div>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username"><i class="fas fa-user"></i> Usuario</label>
+                    <input type="text" id="username" required placeholder="Tu usuario">
+                </div>
+                <div class="form-group">
+                    <label for="password"><i class="fas fa-lock"></i> Contraseña</label>
+                    <input type="password" id="password" required placeholder="Tu contraseña">
+                </div>
+                <button type="submit" class="btn primary-btn full-width">
+                    <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
+                </button>
+                <div id="loginError" class="status-message error" style="margin-top: 15px; display: none;">
+                    Credenciales incorrectas. Intenta de nuevo.
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div class="dashboard-container">
         <!-- Barra Lateral -->
         <aside class="sidebar">
             <div class="sidebar-header">
                 <div class="logo">
-                    <i class="fas fa-wallet"></i> Finanzas Personales
+                    <i class="fas fa-wallet"></i> Finanzas Ray
                 </div>
                 <button class="hamburger-btn" id="hamburgerBtn" aria-label="Toggle menu">
                     <i class="fas fa-bars"></i>
@@ -49,6 +76,10 @@
                 </a>
                 <a href="#configuracion" data-section="configuracion">
                     <i class="fas fa-cog"></i> Configuración
+                </a>
+                <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 15px 0;">
+                <a href="#" id="logoutBtn" style="color: var(--danger-color);">
+                    <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
                 </a>
             </nav>
         </aside>

@@ -4,6 +4,7 @@ let currentFilter = 'mensual'; // diario, semanal, mensual
 let ingresoVsGastoChart, gastosPorCategoriaChart, evolucionPrestamosChart;
 
 document.addEventListener('DOMContentLoaded', () => {
+    checkAuth();
     setupNavigation();
     setupHamburgerMenu();
     loadInitialData();
@@ -192,6 +193,13 @@ function setupForms() {
     document.getElementById('cargarGastosBtn').addEventListener('click', loadGastos);
     document.getElementById('cargarIngresosBtn').addEventListener('click', loadIngresos);
     document.getElementById('actualizarDashboardBtn').addEventListener('click', handleLoadDashboard);
+
+    // Login y Logout
+    document.getElementById('loginForm').addEventListener('submit', (e) => handleLogin(e));
+    document.getElementById('logoutBtn').addEventListener('click', (e) => {
+        e.preventDefault();
+        handleLogout();
+    });
 }
 
 function setupFilters() {
@@ -1168,3 +1176,61 @@ function displayStatus(elementId, type, message) {
     el.innerHTML = `<i class="fas fa-${icon}-circle"></i> ${text}`;
     console.log(`[STATUS] ${elementId} (${type}): ${text}`);
 }
+
+// ================= AUTH FUNCTIONS =================
+
+const AUTH_CONFIG = {
+    user: 'admin',
+    pass: '1234'
+};
+
+function checkAuth() {
+    const isLoggedIn = localStorage.getItem('finanzas_logged_in');
+    const overlay = document.getElementById('loginOverlay');
+
+    if (isLoggedIn === 'true') {
+        overlay.classList.add('hidden');
+    } else {
+        overlay.classList.remove('hidden');
+    }
+}
+
+function handleLogin(e) {
+    e.preventDefault();
+    const user = document.getElementById('username').value;
+    const pass = document.getElementById('password').value;
+    const errorEl = document.getElementById('loginError');
+
+    if (user === AUTH_CONFIG.user && pass === AUTH_CONFIG.pass) {
+        localStorage.setItem('finanzas_logged_in', 'true');
+        document.getElementById('loginOverlay').classList.add('hidden');
+        errorEl.style.display = 'none';
+        console.log('Login exitoso');
+        handleLoadDashboard(); // Cargar datos al entrar
+    } else {
+        errorEl.style.display = 'block';
+        errorEl.textContent = 'Usuario o contraseña incorrectos.';
+        // Shake effect opcional
+        const box = document.querySelector('.login-box');
+        box.style.animation = 'none';
+        setTimeout(() => box.style.animation = 'shake 0.4s', 10);
+    }
+}
+
+function handleLogout() {
+    if (confirm('¿Deseas cerrar la sesión activa?')) {
+        localStorage.removeItem('finanzas_logged_in');
+        location.reload(); // Reiniciar app al salir
+    }
+}
+
+// Agregar animación de shake al CSS dinámicamente o podrías ponerlo en estilo.css
+const style = document.createElement('style');
+style.innerHTML = `
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-10px); }
+    75% { transform: translateX(10px); }
+}
+`;
+document.head.appendChild(style);
