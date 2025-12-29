@@ -38,6 +38,9 @@
                 <a href="#objetivos" data-section="objetivos">
                     <i class="fas fa-bullseye"></i> Objetivos Financieros
                 </a>
+                <a href="#prestamos" data-section="prestamos">
+                    <i class="fas fa-handshake"></i> Gestión de Préstamos
+                </a>
                 <a href="#categorias" data-section="categorias">
                     <i class="fas fa-tags"></i> Categorías de Gastos
                 </a>
@@ -98,6 +101,16 @@
                         <div class="stat-value" id="progresoObjetivo">0%</div>
                         <div class="stat-label">Progreso Objetivo</div>
                     </div>
+                    <div class="stat-card cobrar">
+                        <i class="fas fa-file-invoice-dollar fa-2x" style="color: var(--secondary-color);"></i>
+                        <div class="stat-value" id="totalCobrar">$0.00</div>
+                        <div class="stat-label">Cuentas por Cobrar</div>
+                    </div>
+                    <div class="stat-card pagar">
+                        <i class="fas fa-file-invoice-dollar fa-2x" style="color: var(--danger-color);"></i>
+                        <div class="stat-value" id="totalPagar">$0.00</div>
+                        <div class="stat-label">Deudas por Pagar</div>
+                    </div>
                 </div>
 
                 <!-- Gráficas -->
@@ -106,6 +119,9 @@
                 </div>
                 <div class="chart-container">
                     <canvas id="gastosPorCategoriaChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <canvas id="evolucionPrestamosChart"></canvas>
                 </div>
             </section>
 
@@ -130,6 +146,20 @@
                     <div class="form-group">
                         <label for="gasto_fecha">Fecha:</label>
                         <input type="date" id="gasto_fecha" required>
+                    </div>
+                    <hr style="grid-column: 1 / -1; margin: 10px 0;">
+                    <div class="form-group">
+                        <label for="gasto_prestamo_id">Vincular a Préstamo (Opcional):</label>
+                        <select id="gasto_prestamo_id">
+                            <option value="">Ninguno</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="gasto_tipo_abono">Tipo de Abono:</label>
+                        <select id="gasto_tipo_abono">
+                            <option value="CAPITAL">Abono a Capital</option>
+                            <option value="INTERES">Pago de Interés</option>
+                        </select>
                     </div>
 
                     <button type="submit" class="btn primary-btn full-width">
@@ -183,6 +213,20 @@
                     <div class="form-group">
                         <label for="ingreso_fecha">Fecha:</label>
                         <input type="date" id="ingreso_fecha" required>
+                    </div>
+                    <hr style="grid-column: 1 / -1; margin: 10px 0;">
+                    <div class="form-group">
+                        <label for="ingreso_prestamo_id">Vincular a Préstamo (Opcional):</label>
+                        <select id="ingreso_prestamo_id">
+                            <option value="">Ninguno</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="ingreso_tipo_abono">Tipo de Abono:</label>
+                        <select id="ingreso_tipo_abono">
+                            <option value="CAPITAL">Abono a Capital</option>
+                            <option value="INTERES">Pago de Interés</option>
+                        </select>
                     </div>
 
                     <button type="submit" class="btn primary-btn full-width">
@@ -252,7 +296,105 @@
                 </div>
             </section>
 
-            <!-- Sección 4: Categorías de Gastos -->
+            <!-- Sección 4: Gestión de Préstamos -->
+            <section id="prestamos" class="content-section">
+                <h2><i class="fas fa-handshake"></i> Gestión de Préstamos y Créditos</h2>
+                <form id="prestamoForm" class="form-grid">
+                    <div class="form-group">
+                        <label for="prestamo_tipo">Tipo de Operación:</label>
+                        <select id="prestamo_tipo" required>
+                            <option value="PRESTADO">DINERO PRESTADO (Yo doy el dinero - Activo)</option>
+                            <option value="RECIBIDO">CRÉDITO RECIBIDO (Yo recibo el dinero - Pasivo)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="prestamo_contraparte">Deudor / Acreedor:</label>
+                        <input type="text" id="prestamo_contraparte" required
+                            placeholder="Ej: Juan Pérez o Banco Nequi">
+                    </div>
+                    <div class="form-group">
+                        <label for="prestamo_monto">Monto Inicial:</label>
+                        <input type="number" id="prestamo_monto" required min="1" step="0.01" placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label for="prestamo_tasa">Tasa de Interés (% Anual):</label>
+                        <input type="number" id="prestamo_tasa" required min="0" step="0.1" placeholder="0.0">
+                    </div>
+                    <div class="form-group">
+                        <label for="prestamo_plazo">Plazo (Meses):</label>
+                        <input type="number" id="prestamo_plazo" required min="1" placeholder="12">
+                    </div>
+                    <div class="form-group">
+                        <label for="prestamo_fecha">Fecha de Inicio:</label>
+                        <input type="date" id="prestamo_fecha" required>
+                    </div>
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label for="prestamo_notas">Notas / Observaciones:</label>
+                        <textarea id="prestamo_notas" rows="2"
+                            placeholder="Detalles adicionales del préstamo..."></textarea>
+                    </div>
+
+                    <button type="submit" class="btn primary-btn full-width">
+                        <i class="fas fa-save"></i> Registrar Préstamo/Crédito
+                    </button>
+                </form>
+                <div id="statusPrestamo" class="status-message"></div>
+
+                <div class="loan-tables-container"
+                    style="margin-top: 30px; display: flex; flex-direction: column; gap: 30px;">
+                    <div>
+                        <h3><i class="fas fa-file-invoice-dollar" style="color: var(--secondary-color);"></i> Cuentas
+                            por Cobrar (Mis Préstamos)</h3>
+                        <div style="overflow-x: auto;">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha</th>
+                                        <th>Deudor</th>
+                                        <th>Monto Inicial</th>
+                                        <th>Saldo Actual</th>
+                                        <th>Tasa %</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="cobrarTableBody">
+                                    <tr>
+                                        <td colspan="7">Cargando cuentas por cobrar...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3><i class="fas fa-file-invoice-dollar" style="color: var(--danger-color);"></i> Deudas por
+                            Pagar (Mis Créditos)</h3>
+                        <div style="overflow-x: auto;">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha</th>
+                                        <th>Acreedor</th>
+                                        <th>Monto Inicial</th>
+                                        <th>Saldo Actual</th>
+                                        <th>Tasa %</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="pagarTableBody">
+                                    <tr>
+                                        <td colspan="7">Cargando deudas por pagar...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Sección 5: Categorías de Gastos -->
             <section id="categorias" class="content-section">
                 <h2><i class="fas fa-tags"></i> Gestión de Categorías de Gastos</h2>
                 <form id="categoriaForm" class="form-grid">

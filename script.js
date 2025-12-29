@@ -1,7 +1,7 @@
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby1jH8whuVopByami6-iBlV35KFzRSwRlguvBTd3dQoonHgfqwgZubjEVGbSV4SI3M/exec';
 
 let currentFilter = 'mensual'; // diario, semanal, mensual
-let ingresoVsGastoChart, gastosPorCategoriaChart;
+let ingresoVsGastoChart, gastosPorCategoriaChart, evolucionPrestamosChart;
 
 document.addEventListener('DOMContentLoaded', () => {
     setupNavigation();
@@ -108,6 +108,9 @@ async function loadInitialData() {
         // Cargar objetivo activo
         loadObjetivoActivo();
 
+        // Cargar préstamos (para llenar selects)
+        loadPrestamos();
+
     } catch (error) {
         console.error('Error al cargar datos iniciales:', error);
         displayStatus('statusDashboard', 'error', 'Error de conexión al cargar datos iniciales.');
@@ -178,6 +181,9 @@ function setupForms() {
     // Gastos e Ingresos
     document.getElementById('gastoForm').addEventListener('submit', (e) => handleRegistrarGasto(e));
     document.getElementById('ingresoForm').addEventListener('submit', (e) => handleRegistrarIngreso(e));
+
+    // Préstamos
+    document.getElementById('prestamoForm').addEventListener('submit', (e) => handleRegistrarPrestamo(e));
 
     // Objetivos
     document.getElementById('objetivoForm').addEventListener('submit', (e) => handleCrearObjetivo(e));
@@ -252,6 +258,10 @@ async function calcularResumenFinanciero() {
             } else {
                 document.getElementById('progresoObjetivo').textContent = 'N/A';
             }
+
+            // Totales de préstamos
+            document.getElementById('totalCobrar').textContent = `$${(resumen.totalPorCobrar || 0).toFixed(2)}`;
+            document.getElementById('totalPagar').textContent = `$${(resumen.totalPorPagar || 0).toFixed(2)}`;
 
             displayStatus('statusDashboard', 'success', `Resumen ${currentFilter} calculado exitosamente.`);
         } else {
@@ -362,6 +372,44 @@ function renderCharts(data) {
             }
         }
     });
+
+    // Gráfico 3: Evolución de Préstamos
+    const ctx3 = document.getElementById('evolucionPrestamosChart').getContext('2d');
+    if (evolucionPrestamosChart) evolucionPrestamosChart.destroy();
+
+    fetch(`${SCRIPT_URL}?action=getPrestamos`)
+        .then(res => res.json())
+        .then(prestamosData => {
+            if (prestamosData.status === 'success') {
+                const totalCobrar = prestamosData.data.cobrar.reduce((sum, p) => sum + p.saldoActual, 0);
+                const totalPagar = prestamosData.data.pagar.reduce((sum, p) => sum + p.saldoActual, 0);
+
+                evolucionPrestamosChart = new Chart(ctx3, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Cuentas por Cobrar', 'Deudas por Pagar'],
+                        datasets: [{
+                            label: 'Saldo Actual',
+                            data: [totalCobrar, totalPagar],
+                            backgroundColor: ['rgba(40, 167, 69, 0.7)', 'rgba(220, 53, 69, 0.7)'],
+                            borderColor: ['rgba(40, 167, 69, 1)', 'rgba(220, 53, 69, 1)'],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Resumen de Cartera (Activos vs Pasivos)'
+                            }
+                        },
+                        scales: { y: { beginAtZero: true } }
+                    }
+                });
+            }
+        });
 }
 
 // ================= GASTOS FUNCTIONS =================
@@ -382,7 +430,9 @@ async function handleRegistrarGasto(e) {
         categoria: document.getElementById('gasto_categoria').value,
         monto: document.getElementById('gasto_monto').value,
         descripcion: document.getElementById('gasto_descripcion').value,
-        fecha: document.getElementById('gasto_fecha').value
+        fecha: document.getElementById('gasto_fecha').value,
+        prestamoId: document.getElementById('gasto_prestamo_id').value,
+        tipoAbono: document.getElementById('gasto_tipo_abono').value
     };
 
     if (isUpdate) {
@@ -569,7 +619,9 @@ async function handleRegistrarIngreso(e) {
         fuente: document.getElementById('ingreso_fuente').value,
         monto: document.getElementById('ingreso_monto').value,
         descripcion: document.getElementById('ingreso_descripcion').value,
-        fecha: document.getElementById('ingreso_fecha').value
+        fecha: document.getElementById('ingreso_fecha').value,
+        prestamoId: document.getElementById('ingreso_prestamo_id').value,
+        tipoAbono: document.getElementById('ingreso_tipo_abono').value
     };
 
     if (isUpdate) {
@@ -934,17 +986,185 @@ function setButtonState(disabled) {
     document.getElementById('resetDBBtn').disabled = disabled;
 }
 
+// ================= PRESTAMOS FUNCTIONS =================
+
+async function handleRegistrarPrestamo(e) {
+    e.preventDefault();
+    const form = e.target;
+    const submitBtn = form.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+
+    displayStatus('statusPrestamo', 'info', 'Registrando préstamo y movimiento automático...');
+
+    const prestamoData = {
+        action: 'agregarPrestamo',
+        tipo: document.getElementById('prestamo_tipo').value,
+        contraparte: document.getElementById('prestamo_contraparte').value,
+        montoInicial: document.getElementById('prestamo_monto').value,
+        tasaInteres: document.getElementById('prestamo_tasa').value,
+        plazo: document.getElementById('prestamo_plazo').value,
+        fechaInicio: document.getElementById('prestamo_fecha').value,
+        notas: document.getElementById('prestamo_notas').value
+    };
+
+    try {
+        const response = await fetch(SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify(prestamoData),
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+        });
+
+        const rawText = await response.text();
+        console.log('--- RESPUESTA GAS ---');
+        console.log('Raw:', rawText);
+
+        let data;
+        try {
+            data = JSON.parse(rawText);
+        } catch (e) {
+            console.error('Error al parsear JSON:', e);
+            displayStatus('statusPrestamo', 'error', 'El servidor devolvió una respuesta inválida.');
+            return;
+        }
+
+        console.log('Data:', data);
+
+        if (data.status === 'success') {
+            displayStatus('statusPrestamo', 'success', data.message || 'Operación exitosa.');
+            form.reset();
+            setDefaultDates();
+            loadPrestamos();
+            handleLoadDashboard();
+        } else {
+            displayStatus('statusPrestamo', 'error', data.message || 'Ocurrió un error en el servidor.');
+        }
+    } catch (error) {
+        console.error('Error en fetch:', error);
+        displayStatus('statusPrestamo', 'error', `Error de conexión: ${error.message}`);
+    } finally {
+        submitBtn.disabled = false;
+    }
+}
+
+async function loadPrestamos() {
+    try {
+        const response = await fetch(`${SCRIPT_URL}?action=getPrestamos`);
+        const data = await response.json();
+
+        if (data.status === 'success') {
+            renderPrestamosTables(data.data);
+            populatePrestamosSelects(data.data);
+        }
+    } catch (error) {
+        console.error('Error al cargar préstamos:', error);
+    }
+}
+
+function renderPrestamosTables(data) {
+    const cobrarTable = document.getElementById('cobrarTableBody');
+    const pagarTable = document.getElementById('pagarTableBody');
+
+    // Cuentas por Cobrar
+    if (data.cobrar.length === 0) {
+        cobrarTable.innerHTML = '<tr><td colspan="7">No hay cuentas por cobrar.</td></tr>';
+    } else {
+        cobrarTable.innerHTML = data.cobrar.map(p => `
+            <tr>
+                <td>${p.fechaInicio}</td>
+                <td>${p.contraparte}</td>
+                <td>$${p.montoInicial.toFixed(2)}</td>
+                <td style="font-weight:bold; color: var(--secondary-color);">$${p.saldoActual.toFixed(2)}</td>
+                <td>${p.tasa}%</td>
+                <td><span class="status-pill ${p.estado.toLowerCase()}">${p.estado}</span></td>
+                <td>
+                    <button class="btn-icon delete-btn" data-id="${p.id}" onclick="eliminarPrestamo(${p.id})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    // Deudas por Pagar
+    if (data.pagar.length === 0) {
+        pagarTable.innerHTML = '<tr><td colspan="7">No hay deudas por pagar.</td></tr>';
+    } else {
+        pagarTable.innerHTML = data.pagar.map(p => `
+            <tr>
+                <td>${p.fechaInicio}</td>
+                <td>${p.contraparte}</td>
+                <td>$${p.montoInicial.toFixed(2)}</td>
+                <td style="font-weight:bold; color: var(--danger-color);">$${p.saldoActual.toFixed(2)}</td>
+                <td>${p.tasa}%</td>
+                <td><span class="status-pill ${p.estado.toLowerCase()}">${p.estado}</span></td>
+                <td>
+                    <button class="btn-icon delete-btn" data-id="${p.id}" onclick="eliminarPrestamo(${p.id})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    }
+}
+
+function populatePrestamosSelects(prestamos) {
+    const selects = [
+        document.getElementById('gasto_prestamo_id'),
+        document.getElementById('ingreso_prestamo_id')
+    ];
+
+    const allPrestamos = [...prestamos.cobrar, ...prestamos.pagar].filter(p => p.estado === 'Activo');
+
+    selects.forEach(select => {
+        if (!select) return;
+        const currentValue = select.value;
+        select.innerHTML = '<option value="">Ninguno</option>';
+        allPrestamos.forEach(p => {
+            const label = `${p.tipo === 'PRESTADO' ? 'Cobro' : 'Pago'}: ${p.contraparte} (Bal: $${p.saldoActual.toFixed(2)})`;
+            select.innerHTML += `<option value="${p.id}">${label}</option>`;
+        });
+        select.value = currentValue;
+    });
+}
+
+async function eliminarPrestamo(id) {
+    if (!confirm('¿Seguro que deseas eliminar este préstamo?')) return;
+
+    try {
+        const response = await fetch(SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'eliminarPrestamo', id: id }),
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+        });
+        const data = await response.json();
+        if (data.status === 'success') {
+            loadPrestamos();
+            handleLoadDashboard();
+        }
+    } catch (error) {
+        console.error('Error al eliminar:', error);
+    }
+}
+
 // ================= UTILITY FUNCTIONS =================
 
 function displayStatus(elementId, type, message) {
     const el = document.getElementById(elementId);
+    if (!el) return;
+
     el.style.display = 'block';
     el.className = `status-message ${type}`;
+
     const iconMap = {
         'success': 'check',
         'error': 'times',
         'warning': 'exclamation-triangle',
         'info': 'info'
     };
-    el.innerHTML = `<i class="fas fa-${iconMap[type]}-circle"></i> ${message}`;
+
+    const icon = iconMap[type] || 'info';
+    const text = message || (type === 'error' ? 'Error desconocido' : '');
+
+    el.innerHTML = `<i class="fas fa-${icon}-circle"></i> ${text}`;
+    console.log(`[STATUS] ${elementId} (${type}): ${text}`);
 }
