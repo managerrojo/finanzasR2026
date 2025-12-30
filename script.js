@@ -969,6 +969,7 @@ async function handleAgregarFuente(e) {
 // ================= CONFIGURACIÓN =================
 
 async function handleConfigAction(action) {
+    // FlujoFuncionCuotamensual: Esta función dispara la inicialización de la DB desde el cliente
     setButtonState(true);
     displayStatus('statusConfig', 'info', `Procesando la acción de ${action}...`);
 
@@ -1012,7 +1013,8 @@ async function handleRegistrarPrestamo(e) {
         tasaInteres: document.getElementById('prestamo_tasa').value,
         plazo: document.getElementById('prestamo_plazo').value,
         fechaInicio: document.getElementById('prestamo_fecha').value,
-        notas: document.getElementById('prestamo_notas').value
+        notas: document.getElementById('prestamo_notas').value,
+        cuotaMensual: document.getElementById('prestamo_cuota').value
     };
 
     try {
@@ -1051,6 +1053,43 @@ async function handleRegistrarPrestamo(e) {
         displayStatus('statusPrestamo', 'error', `Error de conexión: ${error.message}`);
     } finally {
         submitBtn.disabled = false;
+    }
+}
+
+// Escuchadores para el cálculo automático de cuota
+document.addEventListener('DOMContentLoaded', () => {
+    // Nota: estos listeners se agregan adicionalmente a los del setupForms
+    // Asegurarse de que los elementos existan antes de agregar listeners
+    setTimeout(() => {
+        const inputsCalculo = ['prestamo_monto', 'prestamo_tasa', 'prestamo_plazo'];
+        inputsCalculo.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('input', calculateEstimatedQuota);
+        });
+    }, 1000); // Pequeño delay para asegurar carga del DOM
+});
+
+function calculateEstimatedQuota() {
+    const monto = parseFloat(document.getElementById('prestamo_monto').value) || 0;
+    const tasaAnual = parseFloat(document.getElementById('prestamo_tasa').value) || 0;
+    const plazos = parseInt(document.getElementById('prestamo_plazo').value) || 1;
+    const inputCuota = document.getElementById('prestamo_cuota');
+
+    // Solo calcular si no hay un valor manual o si el usuario quiere recalcular
+    // Por ahora, calculamos siempre que cambien los inputs principales
+    // El usuario puede sobrescribir el resultado final
+
+    if (monto > 0 && plazos > 0) {
+        let cuota = 0;
+        if (tasaAnual === 0) {
+            cuota = monto / plazos;
+        } else {
+            const i = (tasaAnual / 100) / 12;
+            cuota = (monto * i * Math.pow(1 + i, plazos)) / (Math.pow(1 + i, plazos) - 1);
+        }
+        inputCuota.value = cuota.toFixed(2);
+    } else {
+        inputCuota.value = '';
     }
 }
 
@@ -1222,7 +1261,7 @@ function displayStatus(elementId, type, message) {
 
 const AUTH_CONFIG = {
     user: 'admin',
-    pass: '1234'
+    pass: 'LetrasyNumeros123.'
 };
 
 function checkAuth() {
