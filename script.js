@@ -1082,12 +1082,18 @@ function renderPrestamosTables(data) {
                 <td>${p.contraparte}</td>
                 <td>$${p.montoInicial.toFixed(2)}</td>
                 <td style="font-weight:bold; color: var(--secondary-color);">$${p.saldoActual.toFixed(2)}</td>
+                <td>$${(p.cuotaMensual || 0).toFixed(2)}</td>
                 <td>${p.tasa}%</td>
                 <td><span class="status-pill ${p.estado.toLowerCase()}">${p.estado}</span></td>
                 <td>
-                    <button class="btn-icon delete-btn" data-id="${p.id}" onclick="eliminarPrestamo(${p.id})">
-                        <i class="fas fa-trash"></i>
-                    </button>
+                    <div class="action-buttons">
+                        <button class="btn-icon edit-btn" title="Registrar Pago" onclick="prellenarPagoCuota(${p.id}, ${p.cuotaMensual}, 'INGRESO')">
+                            <i class="fas fa-hand-holding-usd"></i>
+                        </button>
+                        <button class="btn-icon delete-btn" data-id="${p.id}" onclick="eliminarPrestamo(${p.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
                 </td>
             </tr>
         `).join('');
@@ -1103,12 +1109,18 @@ function renderPrestamosTables(data) {
                 <td>${p.contraparte}</td>
                 <td>$${p.montoInicial.toFixed(2)}</td>
                 <td style="font-weight:bold; color: var(--danger-color);">$${p.saldoActual.toFixed(2)}</td>
+                <td>$${(p.cuotaMensual || 0).toFixed(2)}</td>
                 <td>${p.tasa}%</td>
                 <td><span class="status-pill ${p.estado.toLowerCase()}">${p.estado}</span></td>
                 <td>
-                    <button class="btn-icon delete-btn" data-id="${p.id}" onclick="eliminarPrestamo(${p.id})">
-                        <i class="fas fa-trash"></i>
-                    </button>
+                    <div class="action-buttons">
+                        <button class="btn-icon edit-btn" title="Pagar Cuota" onclick="prellenarPagoCuota(${p.id}, ${p.cuotaMensual}, 'GASTO')">
+                            <i class="fas fa-money-bill-wave"></i>
+                        </button>
+                        <button class="btn-icon delete-btn" data-id="${p.id}" onclick="eliminarPrestamo(${p.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
                 </td>
             </tr>
         `).join('');
@@ -1152,6 +1164,35 @@ async function eliminarPrestamo(id) {
     } catch (error) {
         console.error('Error al eliminar:', error);
     }
+}
+
+function prellenarPagoCuota(id, monto, tipo) {
+    const section = tipo === 'GASTO' ? 'gastos' : 'ingresos';
+    const link = document.querySelector(`.sidebar-nav a[href="#${section}"]`);
+    if (link) link.click();
+
+    setTimeout(() => {
+        if (tipo === 'GASTO') {
+            document.getElementById('gasto_monto').value = monto.toFixed(2);
+            document.getElementById('gasto_descripcion').value = `Pago de cuota mensual - ID Préstamo: ${id}`;
+            document.getElementById('gasto_prestamo_id').value = id;
+            document.getElementById('gasto_tipo_abono').value = 'CAPITAL';
+            document.getElementById('gasto_categoria').value = 'Deuda';
+        } else {
+            document.getElementById('ingreso_monto').value = monto.toFixed(2);
+            document.getElementById('ingreso_descripcion').value = `Cobro de cuota mensual - ID Préstamo: ${id}`;
+            document.getElementById('ingreso_prestamo_id').value = id;
+            document.getElementById('ingreso_tipo_abono').value = 'CAPITAL';
+            document.getElementById('ingreso_fuente').value = 'Otros'; // O una fuente por defecto
+        }
+
+        // Hacer scroll al formulario
+        const formId = tipo === 'GASTO' ? 'gastoForm' : 'ingresoForm';
+        document.getElementById(formId).scrollIntoView({ behavior: 'smooth' });
+
+        // Feedback visual
+        displayStatus(tipo === 'GASTO' ? 'statusGasto' : 'statusIngreso', 'info', 'Datos de cuota prellenados. Revisa y presiona Guardar.');
+    }, 100);
 }
 
 // ================= UTILITY FUNCTIONS =================
