@@ -1261,7 +1261,7 @@ function displayStatus(elementId, type, message) {
 
 const AUTH_CONFIG = {
     user: 'admin',
-    pass: '1234'
+    pass: 'Letrasynumeros123.'
 };
 
 function checkAuth() {
