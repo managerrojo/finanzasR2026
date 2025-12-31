@@ -1,7 +1,13 @@
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby1jH8whuVopByami6-iBlV35KFzRSwRlguvBTd3dQoonHgfqwgZubjEVGbSV4SI3M/exec';
 
 let currentFilter = 'mensual'; // diario, semanal, mensual
-let ingresoVsGastoChart, gastosPorCategoriaChart, evolucionPrestamosChart;
+let ingresoVsGastoChart = null;
+let gastosPorCategoriaChart = null;
+let evolucionPrestamosChart = null;
+
+// Global Data Storage for Filters
+let allGastosData = [];
+let allIngresosData = [];
 
 document.addEventListener('DOMContentLoaded', () => {
     checkAuth();
@@ -131,6 +137,9 @@ function populateCategoriasGastos(categorias) {
     selectGasto.innerHTML = '<option value="" disabled selected>Seleccione una categoría</option>';
 
     const listHtml = categorias.map(cat => {
+
+        console.log(categorias, "Categorias");
+
         const nombre = cat.nombre || `(ID ${cat.id})`;
         const color = cat.color || '#007bff';
         selectGasto.innerHTML += `<option value="${nombre}">${nombre}</option>`;
@@ -190,9 +199,14 @@ function setupForms() {
     document.getElementById('objetivoForm').addEventListener('submit', (e) => handleCrearObjetivo(e));
 
     // Botones de carga
-    document.getElementById('cargarGastosBtn').addEventListener('click', loadGastos);
-    document.getElementById('cargarIngresosBtn').addEventListener('click', loadIngresos);
-    document.getElementById('actualizarDashboardBtn').addEventListener('click', handleLoadDashboard);
+    const btnGastos = document.getElementById('cargarGastosBtn');
+    if (btnGastos) btnGastos.addEventListener('click', loadGastos);
+
+    const btnIngresos = document.getElementById('cargarIngresosBtn');
+    if (btnIngresos) btnIngresos.addEventListener('click', loadIngresos);
+
+    const btnDashboard = document.getElementById('actualizarDashboardBtn');
+    if (btnDashboard) btnDashboard.addEventListener('click', handleLoadDashboard);
 
     // Login y Logout
     document.getElementById('loginForm').addEventListener('submit', (e) => handleLogin(e));
@@ -482,45 +496,101 @@ async function loadGastos() {
         const response = await fetch(`${SCRIPT_URL}?action=getGastos`);
         const data = await response.json();
 
-        if (data.status === 'success' && data.data && data.data.length > 0) {
-            displayStatus('statusGasto', 'success', `${data.data.length} gastos cargados.`);
-            tableBody.innerHTML = data.data.map(g => `
-                <tr>
-                    <td>${g.fecha}</td>
-                    <td>${g.categoria}</td>
-                    <td>${g.descripcion}</td>
-                    <td style="color: var(--danger-color); font-weight: bold;">$${parseFloat(g.monto).toFixed(2)}</td>
-                    <td class="action-buttons">
-                        <button class="btn-icon edit-btn" 
-                                data-action="edit-gasto"
-                                data-id="${g.id}" 
-                                data-fecha="${g.fecha}" 
-                                data-categoria="${g.categoria}" 
-                                data-descripcion="${g.descripcion}" 
-                                data-monto="${g.monto}" 
-                                title="Editar">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn-icon delete-btn" 
-                                data-action="delete-gasto"
-                                data-id="${g.id}" 
-                                title="Eliminar">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </td>
-                </tr>
-            `).join('');
-
-            // Agregar event listeners después de crear el HTML
+        if (data.status === 'success' && data.data) {
+            allGastosData = data.data; // Guardar en global
+            renderGastosTable(allGastosData);
+            displayStatus('statusGasto', 'success', `${allGastosData.length} gastos cargados.`);
             setupGastoActionButtons();
+            setupGastoFilters(); // Activar listeners de filtros
         } else {
+            allGastosData = [];
+            renderGastosTable([]);
             displayStatus('statusGasto', 'warning', 'No hay gastos registrados.');
-            tableBody.innerHTML = '<tr><td colspan="5">No hay gastos registrados.</td></tr>';
         }
     } catch (error) {
         displayStatus('statusGasto', 'error', `Error al cargar gastos: ${error.message}`);
         tableBody.innerHTML = '<tr><td colspan="5">Error al cargar datos.</td></tr>';
     }
+}
+
+function renderGastosTable(gastos) {
+    const tableBody = document.getElementById('gastosTableBody');
+    const totalFooter = document.getElementById('totalGastosFiltrado');
+
+    if (gastos.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="5">No se encontraron gastos.</td></tr>';
+        totalFooter.textContent = '$0.00';
+        return;
+    }
+
+    let total = 0;
+
+    tableBody.innerHTML = gastos.map(g => {
+        total += parseFloat(g.monto);
+        return `
+            <tr>
+                <td>${g.fecha}</td>
+                <td>${g.categoria}</td>
+                <td>${g.descripcion}</td>
+                <td style="color: var(--danger-color); font-weight: bold;">$${parseFloat(g.monto).toFixed(2)}</td>
+                <td class="action-buttons">
+                    <button class="btn-icon edit-btn" 
+                            data-action="edit-gasto"
+                            data-id="${g.id}" 
+                            data-fecha="${g.fecha}" 
+                            data-categoria="${g.categoria}" 
+                            data-descripcion="${g.descripcion}" 
+                            data-monto="${g.monto}" 
+                            title="Editar">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn-icon delete-btn" 
+                            data-action="delete-gasto"
+                            data-id="${g.id}" 
+                            title="Eliminar">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+
+    totalFooter.textContent = `$${total.toFixed(2)}`;
+}
+
+function setupGastoFilters() {
+    const inputs = ['filter_gasto_desc', 'filter_gasto_categoria', 'filter_gasto_min', 'filter_gasto_max'];
+    inputs.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', filterGastos);
+    });
+    // Select change event
+    const selectCat = document.getElementById('filter_gasto_categoria');
+    if (selectCat) selectCat.addEventListener('change', filterGastos);
+}
+
+function filterGastos() {
+    const descInput = document.getElementById('filter_gasto_desc');
+    const catInput = document.getElementById('filter_gasto_categoria');
+    const minInput = document.getElementById('filter_gasto_min');
+    const maxInput = document.getElementById('filter_gasto_max');
+
+    const desc = descInput ? descInput.value.toLowerCase() : '';
+    const cat = catInput ? catInput.value : '';
+    const min = minInput ? parseFloat(minInput.value) : NaN;
+    const max = maxInput ? parseFloat(maxInput.value) : NaN;
+
+    const filtered = allGastosData.filter(g => {
+        const matchDesc = g.descripcion.toLowerCase().includes(desc);
+        const matchCat = cat === '' || g.categoria === cat;
+        const monto = parseFloat(g.monto);
+        const matchMin = isNaN(min) || monto >= min;
+        const matchMax = isNaN(max) || monto <= max;
+
+        return matchDesc && matchCat && matchMin && matchMax;
+    });
+
+    renderGastosTable(filtered);
 }
 
 function setupGastoActionButtons() {
@@ -671,45 +741,101 @@ async function loadIngresos() {
         const response = await fetch(`${SCRIPT_URL}?action=getIngresos`);
         const data = await response.json();
 
-        if (data.status === 'success' && data.data && data.data.length > 0) {
-            displayStatus('statusIngreso', 'success', `${data.data.length} ingresos cargados.`);
-            tableBody.innerHTML = data.data.map(i => `
-                <tr>
-                    <td>${i.fecha}</td>
-                    <td>${i.fuente}</td>
-                    <td>${i.descripcion}</td>
-                    <td style="color: var(--secondary-color); font-weight: bold;">$${parseFloat(i.monto).toFixed(2)}</td>
-                    <td class="action-buttons">
-                        <button class="btn-icon edit-btn" 
-                                data-action="edit-ingreso"
-                                data-id="${i.id}" 
-                                data-fecha="${i.fecha}" 
-                                data-fuente="${i.fuente}" 
-                                data-descripcion="${i.descripcion}" 
-                                data-monto="${i.monto}" 
-                                title="Editar">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn-icon delete-btn" 
-                                data-action="delete-ingreso"
-                                data-id="${i.id}" 
-                                title="Eliminar">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </td>
-                </tr>
-            `).join('');
-
-            // Agregar event listeners después de crear el HTML
+        if (data.status === 'success' && data.data) {
+            allIngresosData = data.data; // Guardar en global
+            renderIngresosTable(allIngresosData);
+            displayStatus('statusIngreso', 'success', `${allIngresosData.length} ingresos cargados.`);
             setupIngresoActionButtons();
+            setupIngresoFilters(); // Activar listeners de filtros
         } else {
+            allIngresosData = [];
+            renderIngresosTable([]);
             displayStatus('statusIngreso', 'warning', 'No hay ingresos registrados.');
-            tableBody.innerHTML = '<tr><td colspan="5">No hay ingresos registrados.</td></tr>';
         }
     } catch (error) {
         displayStatus('statusIngreso', 'error', `Error al cargar ingresos: ${error.message}`);
         tableBody.innerHTML = '<tr><td colspan="5">Error al cargar datos.</td></tr>';
     }
+}
+
+function renderIngresosTable(ingresos) {
+    const tableBody = document.getElementById('ingresosTableBody');
+    const totalFooter = document.getElementById('totalIngresosFiltrado');
+
+    if (ingresos.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="5">No se encontraron ingresos.</td></tr>';
+        totalFooter.textContent = '$0.00';
+        return;
+    }
+
+    let total = 0;
+
+    tableBody.innerHTML = ingresos.map(i => {
+        total += parseFloat(i.monto);
+        return `
+            <tr>
+                <td>${i.fecha}</td>
+                <td>${i.fuente}</td>
+                <td>${i.descripcion}</td>
+                <td style="color: var(--secondary-color); font-weight: bold;">$${parseFloat(i.monto).toFixed(2)}</td>
+                <td class="action-buttons">
+                    <button class="btn-icon edit-btn" 
+                            data-action="edit-ingreso"
+                            data-id="${i.id}" 
+                            data-fecha="${i.fecha}" 
+                            data-fuente="${i.fuente}" 
+                            data-descripcion="${i.descripcion}" 
+                            data-monto="${i.monto}" 
+                            title="Editar">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn-icon delete-btn" 
+                            data-action="delete-ingreso"
+                            data-id="${i.id}" 
+                            title="Eliminar">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+
+    totalFooter.textContent = `$${total.toFixed(2)}`;
+}
+
+function setupIngresoFilters() {
+    const inputs = ['filter_ingreso_desc', 'filter_ingreso_fuente', 'filter_ingreso_min', 'filter_ingreso_max'];
+    inputs.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', filterIngresos);
+    });
+    // Select change event
+    const selectFuente = document.getElementById('filter_ingreso_fuente');
+    if (selectFuente) selectFuente.addEventListener('change', filterIngresos);
+}
+
+function filterIngresos() {
+    const descInput = document.getElementById('filter_ingreso_desc');
+    const fuenteInput = document.getElementById('filter_ingreso_fuente');
+    const minInput = document.getElementById('filter_ingreso_min');
+    const maxInput = document.getElementById('filter_ingreso_max');
+
+    const desc = descInput ? descInput.value.toLowerCase() : '';
+    const fuente = fuenteInput ? fuenteInput.value : '';
+    const min = minInput ? parseFloat(minInput.value) : NaN;
+    const max = maxInput ? parseFloat(maxInput.value) : NaN;
+
+    const filtered = allIngresosData.filter(i => {
+        const matchDesc = i.descripcion.toLowerCase().includes(desc);
+        const matchFuente = fuente === '' || i.fuente === fuente;
+        const monto = parseFloat(i.monto);
+        const matchMin = isNaN(min) || monto >= min;
+        const matchMax = isNaN(max) || monto <= max;
+
+        return matchDesc && matchFuente && matchMin && matchMax;
+    });
+
+    renderIngresosTable(filtered);
 }
 
 function setupIngresoActionButtons() {
@@ -1090,6 +1216,78 @@ function calculateEstimatedQuota() {
         inputCuota.value = cuota.toFixed(2);
     } else {
         inputCuota.value = '';
+    }
+}
+
+async function loadFuentes() {
+    const select = document.getElementById('ingreso_fuente');
+    const filterSelect = document.getElementById('filter_ingreso_fuente');
+
+    try {
+        const response = await fetch(`${SCRIPT_URL}?action=getFuentesIngreso`);
+        const data = await response.json();
+
+        if (data.status === 'success' && data.data) {
+            // Populate form select
+            if (select) {
+                select.innerHTML = '';
+                data.data.forEach(fuente => {
+                    const option = document.createElement('option');
+                    option.value = fuente[1]; // Nombre de la fuente
+                    option.textContent = fuente[1];
+                    select.appendChild(option);
+                });
+            }
+
+            // Populate filter select
+            if (filterSelect) {
+                filterSelect.innerHTML = '<option value="">Todas las Fuentes</option>';
+                data.data.forEach(fuente => {
+                    const option = document.createElement('option');
+                    option.value = fuente[1];
+                    option.textContent = fuente[1];
+                    filterSelect.appendChild(option);
+                });
+            }
+        }
+    } catch (error) {
+        console.error('Error al cargar fuentes:', error);
+    }
+}
+
+async function loadCategorias() {
+    const select = document.getElementById('gasto_categoria');
+    const filterSelect = document.getElementById('filter_gasto_categoria');
+
+    try {
+        const response = await fetch(`${SCRIPT_URL}?action=getCategoriasGastos`);
+        const data = await response.json();
+
+        if (data.status === 'success' && data.data) {
+            // Populate form select
+            if (select) {
+                select.innerHTML = '';
+                data.data.forEach(cat => {
+                    const option = document.createElement('option');
+                    option.value = cat[1]; // Nombre de la categoría
+                    option.textContent = cat[1];
+                    select.appendChild(option);
+                });
+            }
+
+            // Populate filter select
+            if (filterSelect) {
+                filterSelect.innerHTML = '<option value="">Todas las Categorías</option>';
+                data.data.forEach(cat => {
+                    const option = document.createElement('option');
+                    option.value = cat[1];
+                    option.textContent = cat[1];
+                    filterSelect.appendChild(option);
+                });
+            }
+        }
+    } catch (error) {
+        console.error('Error al cargar categorías:', error);
     }
 }
 

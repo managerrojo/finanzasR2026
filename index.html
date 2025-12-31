@@ -200,26 +200,51 @@
                 <div id="statusGasto" class="status-message"></div>
 
                 <h3 style="margin-top: 30px;">Historial de Gastos</h3>
-                <button id="cargarGastosBtn" class="btn secondary-btn">
-                    <i class="fas fa-list"></i> Cargar Gastos
-                </button>
-                <div style="max-height: 400px; overflow-y: auto; margin-top: 15px;">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Fecha</th>
-                                <th>Categoría</th>
-                                <th>Descripción</th>
-                                <th>Monto</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="gastosTableBody">
-                            <tr>
-                                <td colspan="5">Presiona "Cargar Gastos" para ver el historial.</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-list"></i> Historial de Gastos</h3>
+                    </div>
+
+                    <!-- Filtros de Gastos -->
+                    <div class="filter-bar">
+                        <div class="filter-group">
+                            <input type="text" id="filter_gasto_desc" placeholder="Buscar descripción...">
+                        </div>
+                        <div class="filter-group">
+                            <select id="filter_gasto_categoria">
+                                <option value="gasto_categoria">Todas las Categorías</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <button id="cargarGastosBtn" class="btn secondary-btn" style="padding: 8px 15px;">
+                                <i class="fas fa-sync-alt"></i> Cargar
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table" id="gastosTable">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Categoría</th>
+                                    <th>Descripción</th>
+                                    <th>Monto</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="gastosTableBody">
+                                <!-- Los gastos se cargarán aquí -->
+                            </tbody>
+                            <tfoot>
+                                <tr style="background-color: #f8f9fa; font-weight: bold;">
+                                    <td colspan="3" style="text-align: right;">Total Filtrado:</td>
+                                    <td id="totalGastosFiltrado" style="color: var(--danger-color);">$0.00</td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
                 </div>
             </section>
 
@@ -267,26 +292,50 @@
                 <div id="statusIngreso" class="status-message"></div>
 
                 <h3 style="margin-top: 30px;">Historial de Ingresos</h3>
-                <button id="cargarIngresosBtn" class="btn secondary-btn">
-                    <i class="fas fa-list"></i> Cargar Ingresos
-                </button>
-                <div style="max-height: 400px; overflow-y: auto; margin-top: 15px;">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Fecha</th>
-                                <th>Fuente</th>
-                                <th>Descripción</th>
-                                <th>Monto</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="ingresosTableBody">
-                            <tr>
-                                <td colspan="5">Presiona "Cargar Ingresos" para ver el historial.</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fas fa-list"></i> Historial de Ingresos</h3>
+                    </div>
+
+                    <!-- Filtros de Ingresos -->
+                    <div class="filter-bar">
+                        <div class="filter-group">
+                            <input type="text" id="filter_ingreso_desc" placeholder="Buscar descripción...">
+                        </div>
+                        <div class="filter-group">
+                            <select id="filter_ingreso_fuente">
+                                <option value="">Todas las Fuentes</option>
+                            </select>
+                        </div>
+                        <div class="filter-group" style="display: flex; gap: 5px;">
+                            <input type="number" id="filter_ingreso_min" placeholder="Min $" style="width: 80px;">
+                            <input type="number" id="filter_ingreso_max" placeholder="Max $" style="width: 80px;">
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table" id="ingresosTable">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Fuente</th>
+                                    <th>Descripción</th>
+                                    <th>Monto</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ingresosTableBody">
+                                <!-- Los ingresos se cargarán aquí -->
+                            </tbody>
+                            <tfoot>
+                                <tr style="background-color: #f8f9fa; font-weight: bold;">
+                                    <td colspan="3" style="text-align: right;">Total Filtrado:</td>
+                                    <td id="totalIngresosFiltrado" style="color: var(--success-color);">$0.00</td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
                 </div>
             </section>
 
