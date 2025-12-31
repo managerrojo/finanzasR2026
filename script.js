@@ -499,6 +499,7 @@ async function loadGastos() {
         if (data.status === 'success' && data.data) {
             allGastosData = data.data; // Guardar en global
             renderGastosTable(allGastosData);
+            populateMonthFilter(allGastosData, 'filter_gasto_mes');
             displayStatus('statusGasto', 'success', `${allGastosData.length} gastos cargados.`);
             setupGastoActionButtons();
             setupGastoFilters(); // Activar listeners de filtros
@@ -559,35 +560,28 @@ function renderGastosTable(gastos) {
 }
 
 function setupGastoFilters() {
-    const inputs = ['filter_gasto_desc', 'filter_gasto_categoria', 'filter_gasto_min', 'filter_gasto_max'];
-    inputs.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.addEventListener('input', filterGastos);
-    });
-    // Select change event
-    const selectCat = document.getElementById('filter_gasto_categoria');
-    if (selectCat) selectCat.addEventListener('change', filterGastos);
+    // Inputs de texto
+    const descInput = document.getElementById('filter_gasto_desc');
+    if (descInput) descInput.addEventListener('input', filterGastos);
+
+    // Select de mes
+    const selectMes = document.getElementById('filter_gasto_mes');
+    if (selectMes) selectMes.addEventListener('change', filterGastos);
 }
 
 function filterGastos() {
     const descInput = document.getElementById('filter_gasto_desc');
-    const catInput = document.getElementById('filter_gasto_categoria');
-    const minInput = document.getElementById('filter_gasto_min');
-    const maxInput = document.getElementById('filter_gasto_max');
+    const mesInput = document.getElementById('filter_gasto_mes');
 
     const desc = descInput ? descInput.value.toLowerCase() : '';
-    const cat = catInput ? catInput.value : '';
-    const min = minInput ? parseFloat(minInput.value) : NaN;
-    const max = maxInput ? parseFloat(maxInput.value) : NaN;
+    const mes = mesInput ? mesInput.value : '';
 
     const filtered = allGastosData.filter(g => {
         const matchDesc = g.descripcion.toLowerCase().includes(desc);
-        const matchCat = cat === '' || g.categoria === cat;
-        const monto = parseFloat(g.monto);
-        const matchMin = isNaN(min) || monto >= min;
-        const matchMax = isNaN(max) || monto <= max;
+        // Filtrar si el mes seleccionado está contenido en la fecha (YYYY-MM)
+        const matchMes = mes === '' || g.fecha.startsWith(mes);
 
-        return matchDesc && matchCat && matchMin && matchMax;
+        return matchDesc && matchMes;
     });
 
     renderGastosTable(filtered);
@@ -744,6 +738,7 @@ async function loadIngresos() {
         if (data.status === 'success' && data.data) {
             allIngresosData = data.data; // Guardar en global
             renderIngresosTable(allIngresosData);
+            populateMonthFilter(allIngresosData, 'filter_ingreso_mes');
             displayStatus('statusIngreso', 'success', `${allIngresosData.length} ingresos cargados.`);
             setupIngresoActionButtons();
             setupIngresoFilters(); // Activar listeners de filtros
@@ -804,35 +799,27 @@ function renderIngresosTable(ingresos) {
 }
 
 function setupIngresoFilters() {
-    const inputs = ['filter_ingreso_desc', 'filter_ingreso_fuente', 'filter_ingreso_min', 'filter_ingreso_max'];
-    inputs.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.addEventListener('input', filterIngresos);
-    });
-    // Select change event
-    const selectFuente = document.getElementById('filter_ingreso_fuente');
-    if (selectFuente) selectFuente.addEventListener('change', filterIngresos);
+    // Inputs de texto
+    const descInput = document.getElementById('filter_ingreso_desc');
+    if (descInput) descInput.addEventListener('input', filterIngresos);
+
+    // Select de mes
+    const selectMes = document.getElementById('filter_ingreso_mes');
+    if (selectMes) selectMes.addEventListener('change', filterIngresos);
 }
 
 function filterIngresos() {
     const descInput = document.getElementById('filter_ingreso_desc');
-    const fuenteInput = document.getElementById('filter_ingreso_fuente');
-    const minInput = document.getElementById('filter_ingreso_min');
-    const maxInput = document.getElementById('filter_ingreso_max');
+    const mesInput = document.getElementById('filter_ingreso_mes');
 
     const desc = descInput ? descInput.value.toLowerCase() : '';
-    const fuente = fuenteInput ? fuenteInput.value : '';
-    const min = minInput ? parseFloat(minInput.value) : NaN;
-    const max = maxInput ? parseFloat(maxInput.value) : NaN;
+    const mes = mesInput ? mesInput.value : '';
 
     const filtered = allIngresosData.filter(i => {
         const matchDesc = i.descripcion.toLowerCase().includes(desc);
-        const matchFuente = fuente === '' || i.fuente === fuente;
-        const monto = parseFloat(i.monto);
-        const matchMin = isNaN(min) || monto >= min;
-        const matchMax = isNaN(max) || monto <= max;
+        const matchMes = mes === '' || i.fecha.startsWith(mes);
 
-        return matchDesc && matchFuente && matchMin && matchMax;
+        return matchDesc && matchMes;
     });
 
     renderIngresosTable(filtered);
@@ -1221,32 +1208,26 @@ function calculateEstimatedQuota() {
 
 async function loadFuentes() {
     const select = document.getElementById('ingreso_fuente');
-    const filterSelect = document.getElementById('filter_ingreso_fuente');
+    // Filter logic moved to Month-based filter
 
     try {
         const response = await fetch(`${SCRIPT_URL}?action=getFuentesIngreso`);
         const data = await response.json();
 
         if (data.status === 'success' && data.data) {
+            const getName = (item) => item.nombre || item[1];
+
             // Populate form select
             if (select) {
                 select.innerHTML = '';
                 data.data.forEach(fuente => {
-                    const option = document.createElement('option');
-                    option.value = fuente[1]; // Nombre de la fuente
-                    option.textContent = fuente[1];
-                    select.appendChild(option);
-                });
-            }
-
-            // Populate filter select
-            if (filterSelect) {
-                filterSelect.innerHTML = '<option value="">Todas las Fuentes</option>';
-                data.data.forEach(fuente => {
-                    const option = document.createElement('option');
-                    option.value = fuente[1];
-                    option.textContent = fuente[1];
-                    filterSelect.appendChild(option);
+                    const nombre = getName(fuente);
+                    if (nombre) {
+                        const option = document.createElement('option');
+                        option.value = nombre;
+                        option.textContent = nombre;
+                        select.appendChild(option);
+                    }
                 });
             }
         }
@@ -1257,32 +1238,27 @@ async function loadFuentes() {
 
 async function loadCategorias() {
     const select = document.getElementById('gasto_categoria');
-    const filterSelect = document.getElementById('filter_gasto_categoria');
+    // Filter logic moved to Month-based filter
 
     try {
         const response = await fetch(`${SCRIPT_URL}?action=getCategoriasGastos`);
         const data = await response.json();
 
         if (data.status === 'success' && data.data) {
+            // Helper function to get name safely
+            const getName = (item) => item.nombre || item[1];
+
             // Populate form select
             if (select) {
                 select.innerHTML = '';
                 data.data.forEach(cat => {
-                    const option = document.createElement('option');
-                    option.value = cat[1]; // Nombre de la categoría
-                    option.textContent = cat[1];
-                    select.appendChild(option);
-                });
-            }
-
-            // Populate filter select
-            if (filterSelect) {
-                filterSelect.innerHTML = '<option value="">Todas las Categorías</option>';
-                data.data.forEach(cat => {
-                    const option = document.createElement('option');
-                    option.value = cat[1];
-                    option.textContent = cat[1];
-                    filterSelect.appendChild(option);
+                    const nombre = getName(cat);
+                    if (nombre) {
+                        const option = document.createElement('option');
+                        option.value = nombre;
+                        option.textContent = nombre;
+                        select.appendChild(option);
+                    }
                 });
             }
         }
@@ -1499,6 +1475,34 @@ function handleLogout() {
     if (confirm('¿Deseas cerrar la sesión activa?')) {
         localStorage.removeItem('finanzas_logged_in');
         location.reload(); // Reiniciar app al salir
+    }
+}
+
+// Helper para poblar filtro de meses
+function populateMonthFilter(data, elementId) {
+    const select = document.getElementById(elementId);
+    if (!select) return;
+
+    // Extraer meses únicos (YYYY-MM)
+    const months = [...new Set(data.map(item => item.fecha.substring(0, 7)))];
+
+    // Ordenar descendente (más reciente primero)
+    months.sort().reverse();
+
+    // Guardar selección actual si existe
+    const currentVal = select.value;
+
+    select.innerHTML = '<option value="">Todos los Meses</option>';
+    months.forEach(month => {
+        const option = document.createElement('option');
+        option.value = month;
+        option.textContent = month;
+        select.appendChild(option);
+    });
+
+    // Restaurar selección si sigue existiendo
+    if (months.includes(currentVal)) {
+        select.value = currentVal;
     }
 }
 
