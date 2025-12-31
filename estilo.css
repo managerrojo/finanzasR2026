@@ -90,6 +90,24 @@ body {
   margin-right: 10px;
 }
 
+/* Utilitarios Responsive */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.dashboard-controls {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  align-items: center;
+}
+
+.update-btn {
+  margin-left: auto;
+}
+
 .main-content {
   flex-grow: 1;
   padding: 30px;
@@ -439,7 +457,10 @@ select:focus {
   /* Mostrar menú cuando tiene clase 'show' */
   .sidebar-nav.show {
     display: grid;
-    max-height: 500px;
+    max-height: 80vh;
+    /* Aumentado y dinámico */
+    overflow-y: auto;
+    /* Scroll vertical si es necesario */
     animation: slideDown 0.3s ease-out;
   }
 
@@ -514,7 +535,21 @@ select:focus {
   select {
     padding: 12px;
     font-size: 16px;
+    width: 100%;
+    /* Forzar ancho completo */
     /* Evita zoom en iOS */
+  }
+
+  /* Dashboard Controls Mobile */
+  .dashboard-controls {
+    flex-wrap: wrap;
+    /* Permitir que los botones bajen */
+  }
+
+  .update-btn {
+    margin-left: 0;
+    width: 100%;
+    /* Botón actualizar full width */
   }
 
   /* Tablas responsive */

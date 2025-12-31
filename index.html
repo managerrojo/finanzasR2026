@@ -92,7 +92,8 @@
                 <h2><i class="fas fa-chart-line"></i> Dashboard - Resumen Financiero</h2>
 
                 <!-- Filtros Temporales -->
-                <div style="display: flex; gap: 10px; margin-bottom: 20px; align-items: center;">
+                <!-- Filtros Temporales -->
+                <div class="dashboard-controls">
                     <span style="font-weight: bold;">Ver:</span>
                     <button id="filtroDiario" class="btn secondary-btn filtro-activo">
                         <i class="fas fa-calendar-day"></i> Diario
@@ -103,7 +104,7 @@
                     <button id="filtroMensual" class="btn secondary-btn">
                         <i class="fas fa-calendar-alt"></i> Mensual
                     </button>
-                    <button id="actualizarDashboardBtn" class="btn primary-btn" style="margin-left: auto;">
+                    <button id="actualizarDashboardBtn" class="btn primary-btn update-btn">
                         <i class="fas fa-sync"></i> Actualizar
                     </button>
                 </div>
@@ -432,7 +433,7 @@
                     <div>
                         <h3><i class="fas fa-file-invoice-dollar" style="color: var(--secondary-color);"></i> Cuentas
                             por Cobrar (Mis Préstamos)</h3>
-                        <div style="overflow-x: auto;">
+                        <div class="table-responsive">
                             <table class="data-table">
                                 <thead>
                                     <tr>
@@ -458,7 +459,7 @@
                     <div>
                         <h3><i class="fas fa-file-invoice-dollar" style="color: var(--danger-color);"></i> Deudas por
                             Pagar (Mis Créditos)</h3>
-                        <div style="overflow-x: auto;">
+                        <div class="table-responsive">
                             <table class="data-table">
                                 <thead>
                                     <tr>
